@@ -47,7 +47,7 @@ Sigue estos pasos para poner en marcha el proyecto en tu entorno local.
     ```
 
 2.  **Configurar las Variables de Entorno (MUY IMPORTANTE)**:
-    Para que la aplicación funcione, necesita credenciales para la base de datos y para el servicio de envío de correos. Por seguridad, el archivo con las credenciales reales (`configs/config.yaml`) se ignora en el control de versiones. Deberás crearlo a partir de la plantilla proporcionada.
+    Para que la aplicación funcione, necesitamos credenciales para la base de datos y para el servicio de envío de correos. Por seguridad, el archivo con las credenciales reales (`configs/config.yaml`) se ignora en el control de versiones. Deberás crearlo a partir de la plantilla proporcionada.
 
     **a. Renombrar el archivo de ejemplo:**
     Dentro de la carpeta `configs/`, cambia el nombre de `config.example.yaml` a `config.yaml`.
@@ -58,7 +58,7 @@ Sigue estos pasos para poner en marcha el proyecto en tu entorno local.
     **¿Por qué es necesario esto y qué es una "Contraseña de Aplicación"?**
     La aplicación envía correos automáticos (para verificar cuentas, enviar alertas, etc.). Para hacer esto de forma segura, no puede usar tu contraseña principal de Gmail. Si lo hiciera, tus credenciales estarían guardadas en un archivo y sería un riesgo de seguridad enorme.
     
-    Una **Contraseña de Aplicación** es una contraseña de 16 dígitos que le da a una aplicación específica (en este caso, la nuestra) permiso para acceder a tu cuenta de Google, pero de forma muy limitada (solo para enviar correos). Si alguna vez quieres quitarle el acceso, simplemente borras esa contraseña de aplicación en tu cuenta de Google, sin necesidad de cambiar tu contraseña principal. Es la forma moderna y segura de permitir que programas automatizados usen tu cuenta.
+    Una **Contraseña de Aplicación** es una contraseña de 16 dígitos que le da a una aplicación específica permiso para acceder a tu cuenta de Google, pero de forma muy limitada (solo para enviar correos). Si alguna vez quieres quitarle el acceso, simplemente borras esa contraseña de aplicación en tu cuenta de Google, sin necesidad de cambiar tu contraseña principal. Es la forma moderna y segura de permitir que programas automatizados usen tu cuenta.
 
     **a. Activar la Verificación en Dos Pasos (Requisito de Google):**
     - Ve a la [página de seguridad de tu cuenta de Google](https://myaccount.google.com/security).
@@ -234,65 +234,12 @@ A continuación se documentan los principales endpoints de la aplicación.
 
 ---
 
-
 ## 🔐 Seguridad
 
 -   **Hash de contraseñas**: Se utiliza `bcrypt` para almacenar las contraseñas de forma segura.
 -   **Validación de formularios**: Se valida la entrada del usuario tanto en el frontend como en el backend.
 -   **Tokens seguros**: Se usan tokens criptográficamente seguros para la verificación de email y el restablecimiento de contraseña.
 -   **Protección de rutas**: Se utilizan middlewares para proteger las rutas que requieren autenticación.
-tión de Perfil (Requiere autenticación)**
-    -   `GET /perfil`: Muestra la página del perfil del usuario.
-    -   `POST /cambiar-password`: Permite al usuario cambiar su contraseña.
-    -   `POST /borrar-cuenta`: Permite al usuario eliminar su cuenta.
--   **Recuperación de Contraseña**
-    -   `GET /forgot-password`: Muestra el formulario para solicitar el restablecimiento.
-    -   `POST /forgot-password`: Envía el email con el enlace de restablecimiento.
-    -   `GET /restablecer-password`: Muestra el formulario para introducir la nueva contraseña (requiere token).
-    -   `POST /restablecer-password`: Procesa el cambio de la nueva contraseña.
-
-</details>
-
-<details>
-<summary><strong>🔍 Navegación de Productos</strong></summary>
-
--   `GET /`: Página principal con productos destacados.
--   `GET /categoria/{slug}`: Muestra todos los productos de una categoría específica.
--   `GET /producto/{id}`: Muestra la página de detalle de un producto, con su historial de precios.
--   `GET /api/categoria/{slug}`: Endpoint JSON para obtener los productos de una categoría (usado para filtrado y paginación dinámica).
-
-</details>
-
-<details>
-<summary><strong>📊 Gestión de Alertas y "Mi Cesta"</strong></summary>
-
--   `GET /watchlist`: Muestra la "cesta" del usuario con todos los productos que está siguiendo.
--   `POST /price-alert/set`: (API) Añade un producto a la cesta o crea una alerta de precio.
--   `GET /price-alert/update`: Actualiza el precio objetivo de una alerta existente.
--   `GET /price-alert/delete`: Elimina un producto/alerta de la cesta.
-
-</details>
-
-<details>
-<summary><strong>🔔 Sistema de Notificaciones</strong></summary>
-
--   `GET /notificaciones`: Muestra todas las notificaciones del usuario.
--   `POST /notificaciones/marcar-leida`: Marca una notificación específica como leída.
--   `POST /notificaciones/marcar-leidas`: Marca todas las notificaciones como leídas.
--   `POST /api/notifications/delete-read`: (API) Elimina todas las notificaciones que ya han sido leídas.
-
-</details>
-
-<details>
-<summary><strong>⚠️ Errores Comunes</strong></summary>
-
--   **Autenticación**: Credenciales inválidas, sesión expirada, acceso no autorizado.
--   **Registro**: Usuario o email ya existente, contraseña no cumple los requisitos.
--   **Alertas**: Precio objetivo inválido, producto no encontrado, alerta duplicada.
-
-</details>
-
----
 
 ## ⚙️ Tareas Programadas (Cron Jobs)
 
@@ -301,12 +248,3 @@ El sistema ejecuta las siguientes tareas en segundo plano de forma automática:
 -   **Scraping completo (Cada 48 horas):** Descubre nuevos productos en todas las tiendas.
 -   **Verificación de Alertas (Cada 6 horas):** Comprueba si se ha alcanzado algún precio objetivo y envía notificaciones.
 -   **Limpieza de precios (Cada 72 horas):** Elimina registros de precios antiguos para mantener la base de datos optimizada.
-
----
-
-## 🔐 Seguridad
-
--   **Hash de contraseñas**: Se utiliza `bcrypt` para almacenar las contraseñas de forma segura.
--   **Validación de formularios**: Se valida la entrada del usuario tanto en el frontend como en el backend.
--   **Tokens seguros**: Se usan tokens criptográficamente seguros para la verificación de email y el restablecimiento de contraseña.
--   **Protección de rutas**: Se utilizan middlewares para proteger las rutas que requieren autenticación.
