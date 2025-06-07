@@ -234,15 +234,6 @@ A continuación se documentan los principales endpoints de la aplicación.
 
 ---
 
-## ⚙️ Tareas Programadas (Cron Jobs)
-
-El sistema ejecuta las siguientes tareas en segundo plano de forma automática:
-
--   **Scraping completo (Cada 48 horas):** Descubre nuevos productos en todas las tiendas.
--   **Verificación de Alertas (Cada 6 horas):** Comprueba si se ha alcanzado algún precio objetivo y envía notificaciones.
--   **Limpieza de precios (Cada 72 horas):** Elimina registros de precios antiguos para mantener la base de datos optimizada.
-
----
 
 ## 🔐 Seguridad
 
