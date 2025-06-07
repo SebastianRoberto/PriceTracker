@@ -1,0 +1,170 @@
+{{ define "title" }}Notificaciones - Comparador de Precios{{ end }}
+
+{{ define "content" }}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Notificaciones</h2>
+                {{ if gt (len .Notifications) 0 }}
+                <div class="d-flex gap-2">
+                    <form method="POST" action="/notificaciones/marcar-leidas" id="mark-all-form">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-check-all me-1"></i>Marcar todas como leídas
+                        </button>
+                    </form>
+                    <button id="delete-read-btn" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash me-1"></i>Eliminar leídas
+                    </button>
+                </div>
+                {{ end }}
+            </div>
+            <div class="card-body">
+                {{ if gt (len .Notifications) 0 }}
+                <div class="list-group" id="notifications-list">
+                    {{ range .Notifications }}
+                    <div class="list-group-item list-group-item-action {{ if not .IsRead }}bg-light{{ end }}" data-notification-id="{{ .ID }}" data-is-read="{{ .IsRead }}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ .Title }}</h5>
+                            <small class="text-muted">{{ .CreatedAt.Format "02/01/2006 15:04" }}</small>
+                        </div>
+                        <p class="mb-1">{{ .Message }}</p>
+                        {{ if .ProductID }}
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small>
+                                {{ if .PriceAlert }}
+                                Alerta de precio | Objetivo: {{ .PriceAlert.TargetPrice }}€
+                                {{ end }}
+                            </small>
+                            <a href="/producto/{{ .ProductID }}" class="btn btn-sm btn-primary">Ver producto</a>
+                        </div>
+                        {{ end }}
+                        {{ if not .IsRead }}
+                        <div class="mt-2 text-end">
+                            <button type="button" class="btn btn-sm btn-link p-0 mark-read-btn" data-id="{{ .ID }}">Marcar como leída</button>
+                        </div>
+                        {{ end }}
+                    </div>
+                    {{ end }}
+                </div>
+                <div id="no-notifications" class="text-center my-5" style="display: none;">
+                    <i class="bi bi-bell-slash" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="mt-3">No tienes notificaciones</p>
+                    <p class="text-muted">Las notificaciones aparecerán cuando los productos que sigas alcancen tus precios objetivo</p>
+                    <a href="/" class="btn btn-primary mt-3">Explorar productos</a>
+                </div>
+                {{ else }}
+                <div class="text-center my-5">
+                    <i class="bi bi-bell-slash" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="mt-3">No tienes notificaciones</p>
+                    <p class="text-muted">Las notificaciones aparecerán cuando los productos que sigas alcancen tus precios objetivo</p>
+                    <a href="/" class="btn btn-primary mt-3">Explorar productos</a>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Manejar clic en "Marcar como leída" para una notificación individual
+        document.querySelectorAll('.mark-read-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const notificationId = this.getAttribute('data-id');
+                const notificationItem = this.closest('.list-group-item');
+                
+                fetch('/notificaciones/marcar-leida', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'notification_id=' + notificationId
+                })
+                .then(response => {
+                    if (response.ok) {
+                        notificationItem.classList.remove('bg-light');
+                        notificationItem.setAttribute('data-is-read', 'true');
+                        this.closest('.mt-2').remove();
+                        
+                        // Actualizar contador de notificaciones (si existe)
+                        updateNotificationCount();
+                    }
+                });
+            });
+        });
+        
+        // Manejar clic en "Marcar todas como leídas"
+        const markAllForm = document.getElementById('mark-all-form');
+        if (markAllForm) {
+            markAllForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                fetch('/notificaciones/marcar-leidas', {
+                    method: 'POST'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Marcar todas como leídas visualmente
+                        document.querySelectorAll('.list-group-item.bg-light').forEach(item => {
+                            item.classList.remove('bg-light');
+                            item.setAttribute('data-is-read', 'true');
+                            const markBtn = item.querySelector('.mark-read-btn');
+                            if (markBtn) {
+                                markBtn.closest('.mt-2').remove();
+                            }
+                        });
+                        
+                        // Actualizar contador de notificaciones
+                        updateNotificationCount();
+                    }
+                });
+            });
+        }
+        
+        // Manejar clic en "Eliminar leídas"
+        const deleteReadBtn = document.getElementById('delete-read-btn');
+        if (deleteReadBtn) {
+            deleteReadBtn.addEventListener('click', function() {
+                fetch('/api/notifications/delete-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Eliminar notificaciones leídas de la vista
+                        document.querySelectorAll('.list-group-item[data-is-read="true"]').forEach(item => {
+                            item.remove();
+                        });
+                        
+                        // Comprobar si quedan notificaciones
+                        const remainingItems = document.querySelectorAll('#notifications-list .list-group-item');
+                        if (remainingItems.length === 0) {
+                            document.getElementById('notifications-list').style.display = 'none';
+                            document.getElementById('no-notifications').style.display = 'block';
+                            deleteReadBtn.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Función para actualizar el contador de notificaciones en el header
+        function updateNotificationCount() {
+            const unreadCount = document.querySelectorAll('.list-group-item.bg-light').length;
+            const badgeElement = document.querySelector('.notification-badge');
+            
+            if (badgeElement) {
+                if (unreadCount > 0) {
+                    badgeElement.setAttribute('data-count', unreadCount);
+                } else {
+                    badgeElement.removeAttribute('data-count');
+                }
+            }
+        }
+    });
+</script>
+{{ end }} 

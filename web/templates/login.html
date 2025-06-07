@@ -1,0 +1,87 @@
+{{ define "title" }}Iniciar Sesión - Comparador de Precios{{ end }}
+
+{{ define "content" }}
+<div class="row justify-content-center my-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card login-card shadow">
+            <div class="login-header text-center py-4 bg-primary text-white">
+                <h2 class="mb-0"><i class="bi bi-person-check me-2"></i>Iniciar Sesión</h2>
+                <p class="text-white-50 mb-0">Accede a tu cuenta para seguir precios</p>
+            </div>
+            <div class="card-body p-4">
+                {{ if .Error }}
+                <div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ .Error }}
+                </div>
+                {{ end }}
+                
+                <form method="POST" action="/login">
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="email" name="email" placeholder="Email" value="{{ .Email }}" required>
+                        <label for="email"><i class="bi bi-envelope me-2"></i>Email</label>
+                    </div>
+                    
+                    <div class="form-password-group mb-4" style="position: relative;">
+                        <div class="form-floating">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Contraseña" required style="padding-right: 3rem;">
+                            <label for="password"><i class="bi bi-key me-2"></i>Contraseña</label>
+                        </div>
+                        <span class="password-toggle-icon" 
+                              style="position: absolute; top: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 0.75rem; cursor: pointer; z-index: 3;"
+                              onclick="togglePasswordAndFocus('password', this.querySelector('i'))">
+                            <i class="bi bi-eye"></i>
+                        </span>
+                    </div>
+                    
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mb-3">
+                    <a href="/forgot-password" class="btn btn-link text-decoration-none btn-sm">
+                        <i class="bi bi-question-circle me-1"></i>¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+                
+                <div class="text-center mt-2">
+                    <p class="mb-0">¿No tienes una cuenta?</p>
+                    <a href="/registro" class="btn btn-link text-decoration-none">
+                        <i class="bi bi-person-plus me-1"></i>Regístrate aquí
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Volver a la página principal
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Nueva función para mostrar/ocultar contraseña y devolver el foco
+    function togglePasswordAndFocus(inputId, iconElement) {
+        const passwordInput = document.getElementById(inputId);
+        if (!passwordInput || !iconElement) return;
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            iconElement.classList.remove('bi-eye');
+            iconElement.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            iconElement.classList.remove('bi-eye-slash');
+            iconElement.classList.add('bi-eye');
+        }
+        // Devolver el foco después de un breve instante
+        setTimeout(function() {
+            passwordInput.focus();
+        }, 0); 
+    }
+</script>
+{{ end }} 

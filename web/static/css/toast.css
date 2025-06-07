@@ -1,0 +1,108 @@
+/* Estilos para toasts y alertas de feedback */
+
+/* Estilos para toasts */
+.toast {
+    min-width: 280px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: none;
+    border-radius: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    transform: translateY(20px);
+}
+
+.toast.showing {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.toast.hide {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.toast-header {
+    border-bottom: none;
+    padding: 0.75rem 1rem;
+    border-top-left-radius: calc(0.5rem - 1px);
+    border-top-right-radius: calc(0.5rem - 1px);
+}
+
+.toast-header.bg-success {
+    background: linear-gradient(135deg, #28a745, #218838) !important;
+}
+
+.toast-header.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #c82333) !important;
+}
+
+.toast-body {
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+}
+
+/* Estilos para alertas de feedback */
+#alertFeedback {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#alertFeedback.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+#alertFeedback.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+/* Animación para el feedback */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.3s ease forwards;
+}
+
+.fade-out-down {
+    animation: fadeOutDown 0.3s ease forwards;
+}
+
+/* Estilos para el botón de cerrar en el toast */
+.toast .btn-close-white {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+}
+
+.toast .btn-close-white:hover {
+    opacity: 1;
+} 

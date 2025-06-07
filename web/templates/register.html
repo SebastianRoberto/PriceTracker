@@ -1,0 +1,164 @@
+{{ define "title" }}Registro - Comparador de Precios{{ end }}
+
+{{ define "content" }}
+<div class="row justify-content-center my-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card register-card shadow">
+            <div class="login-header text-center py-4 bg-success text-white">
+                <h2 class="mb-0"><i class="bi bi-person-plus me-2"></i>Crear Cuenta</h2>
+                <p class="text-white-50 mb-0">Regístrate para ahorrar en tus compras🙂</p>
+            </div>
+            <div class="card-body p-4">
+                {{ if .Error }}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ .Error }}
+                </div>
+                {{ end }}
+                
+                <form method="POST" action="/registro" id="registerForm">
+                    <div class="form-floating mb-3">
+                        <input type="text" name="username" id="username" value="{{ .Username }}" class="form-control" placeholder="Nombre de usuario" required>
+                        <label for="username"><i class="bi bi-person me-2"></i>Nombre de usuario</label>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="email" name="email" id="email" value="{{ .Email }}" class="form-control" placeholder="Email" required>
+                        <label for="email"><i class="bi bi-envelope me-2"></i>Email</label>
+                    </div>
+                    
+                    <div class="form-password-group mb-3">
+                        <div class="form-floating" style="position: relative;">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Contraseña" required style="padding-right: 3.5rem !important;">
+                            <label for="password"><i class="bi bi-key me-2"></i>Contraseña</label>
+                            <span class="password-toggle-icon" 
+                                  style="position: absolute; top: 0; height: calc(3.5rem + 2px); right: 0.5rem; display: flex; align-items: center; cursor: pointer; z-index: 3;"
+                                  onclick="togglePasswordAndFocus('password', this.querySelector('i'))">
+                                <i class="bi bi-eye" style="line-height: 1;"></i>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirmar contraseña" required>
+                        <label for="confirm_password"><i class="bi bi-key me-2"></i>Confirmar contraseña</label>
+                    </div>
+                    
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="bi bi-person-plus-fill me-2"></i>Registrarse
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <p class="mb-0">¿Ya tienes cuenta?</p>
+                    <a href="/login" class="btn btn-link text-decoration-none">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Volver a la página principal
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Nueva función para mostrar/ocultar contraseña y devolver el foco
+    function togglePasswordAndFocus(inputId, iconElement) {
+        const passwordInput = document.getElementById(inputId);
+        if (!passwordInput || !iconElement) return;
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            iconElement.classList.remove('bi-eye');
+            iconElement.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            iconElement.classList.remove('bi-eye-slash');
+            iconElement.classList.add('bi-eye');
+        }
+        // Devolver el foco después de un breve instante
+        setTimeout(function() {
+            passwordInput.focus();
+        }, 0); 
+    }
+    
+    // Validación de contraseñas
+    document.addEventListener('DOMContentLoaded', function() {
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm_password');
+        const form = document.getElementById('registerForm');
+        
+        // Función para validar si las contraseñas coinciden
+        function validatePassword() {
+            if (password.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity('Las contraseñas no coinciden');
+                // Añadir clase para mostrar visualmente el error
+                confirmPassword.classList.add('is-invalid');
+                // Mostrar mensaje de error
+                if (!document.getElementById('password-error')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.id = 'password-error';
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = 'Las contraseñas no coinciden';
+                    confirmPassword.parentNode.appendChild(errorDiv);
+                }
+            } else {
+                confirmPassword.setCustomValidity('');
+                confirmPassword.classList.remove('is-invalid');
+                const errorDiv = document.getElementById('password-error');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            }
+        }
+        
+        // Validar cuando se cambie cualquiera de los campos
+        password.addEventListener('input', validatePassword);
+        confirmPassword.addEventListener('input', validatePassword);
+        
+        // Validar antes de enviar el formulario
+        form.addEventListener('submit', function(event) {
+            if (password.value !== confirmPassword.value) {
+                event.preventDefault();
+                validatePassword();
+            }
+        });
+    });
+</script>
+
+<style>
+    .is-invalid {
+        border-color: #dc3545 !important;
+        /* El padding-right y background-image/position/size originales de .is-invalid se manejan abajo con más especificidad */
+    }
+    
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: .25rem;
+        font-size: 80%;
+        color: #dc3545;
+        text-align: left;
+    }
+
+    /* Ajuste para los iconos de validación de Bootstrap en el campo de contraseña */
+    .form-password-group .form-control#password.is-valid {
+        padding-right: 3.5rem !important; /* Espacio para el check y nuestro ojo */
+        background-position: right 1.75rem center !important; /* Posiciona el check a la izquierda del ojo */
+        /* Bootstrap debería aplicar su propio SVG para el check y su tamaño por defecto. */
+        /* Solo nos aseguramos de la posición si es necesario. */
+        background-repeat: no-repeat; /* Común para iconos de fondo de Bootstrap */
+    }
+
+    .form-password-group .form-control#password.is-invalid {
+        padding-right: 3.5rem !important; /* Espacio solo para nuestro ojo */
+        background-image: none !important; /* Eliminar el icono de advertencia de Bootstrap */
+    }
+</style>
+{{ end }} 

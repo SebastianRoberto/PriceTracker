@@ -1,0 +1,55 @@
+# Este archivo es un ejemplo de como configurar el sistema, debes reemplazar los valores por los tuyos y cambiar el nombre de este archivo a config.yaml
+# En el README.md del proyecto se explica como configurar el sistema, si tienes alguna duda puedes contactarme en mi correo: sebastian.roberto.pp@gmail.com
+
+app:
+  name: "Comparador de Precios de Tecnología"
+  environment: "development"
+  port: 8080
+  url: "http://localhost:8080"  
+  session_ttl: 86400  # 24 horas en segundos
+
+database:
+  driver: "mysql"
+  host: "localhost" 
+  port: 3306
+  username: "root" # <-- Normalmente sera root pero reemplazar si es necesario
+  password: "TU_CONTRASENA_DE_BD" # <-- REEMPLAZAR
+  name: "comparador_precios"
+  charset: "utf8mb4"
+  loc: "Local"
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: "1h"
+
+scraper:
+  update_interval: 48h  # Intervalo de actualización
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  max_retries: 3
+  retry_delay: 5s
+
+email:
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  smtp_user: "TU_USUARIO_SMTP@gmail.com" # <-- REEMPLAZAR
+  smtp_pass: "TU_CONTRASENA_DE_APP_DE_GMAIL" # <-- REEMPLAZAR
+  smtp_from: "TU_USUARIO_SMTP@gmail.com" # <-- REEMPLAZAR
+  
+categories:
+  - slug: "portatiles"
+    name: "Portátiles"
+  - slug: "tarjetas-graficas"
+    name: "Tarjetas Gráficas"
+  - slug: "auriculares"
+    name: "Auriculares"
+  - slug: "teclados"
+    name: "Teclados"
+  - slug: "monitores"
+    name: "Monitores"
+  - slug: "ssd"
+    name: "Discos SSD"
+
+stores:
+  - id: "ebay"
+    name: "eBay"
+    base_url: "https://www.ebay.com"
+    enabled: true 

@@ -1,0 +1,19 @@
+configs/.env
+configs/config.yaml
+configs/env
+
+# Archivos de log
+*.log
+salida.log
+debug_log.txt
+
+# Binarios compilados
+*.exe
+*.out
+app
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+config.yaml
+arquitecturaproyecto.txt

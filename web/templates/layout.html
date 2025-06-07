@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ block "title" . }}Comparador de Precios de Tecnología{{ end }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="https://unpkg.com/tippy.js@6/animations/scale.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <link href="/static/css/toast.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/static/img/navegador.png">
+    {{ if .User }}
+    <meta name="user-logged-in" content="true">
+    {{ end }}
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="modern-body">
+    <div class="page-container">
+        <header class="site-header">
+    <div class="container">
+                <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm rounded-4" x-data="{ isOpen: false }">
+                <div class="container-fluid">
+                        <a class="navbar-brand" href="/" data-aos="fade-right">
+                            <span class="brand-icon"><i class="bi bi-tag-fill"></i></span>
+                            <span class="brand-text text-primary">Comparador de precios</span>
+                        </a>
+                        <button class="navbar-toggler" type="button" @click="isOpen = !isOpen" 
+                                :aria-expanded="isOpen">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                        <div class="collapse navbar-collapse" :class="{ 'show': isOpen }" id="navbarNav">
+                        <ul class="navbar-nav me-auto">
+                            <li class="nav-item">
+                                    <a class="nav-link" href="/"><i class="bi bi-house-door-fill me-1"></i>Inicio</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="categoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-grid-fill me-1"></i>Categorías
+                                </a>
+                                    <ul class="dropdown-menu dropdown-menu-animated shadow-lg" aria-labelledby="categoriesDropdown">
+                                        {{ if .Categories }}
+                                    {{ range .Categories }}
+                                            <li><a class="dropdown-item" href="/categoria/{{ .Slug }}">
+                                                <span class="category-icon">
+                                                {{ if eq .Slug "portatiles" }}<i class="bi bi-laptop"></i>
+                                                {{ else if eq .Slug "tarjetas-graficas" }}<i class="bi bi-gpu-card"></i>
+                                                {{ else if eq .Slug "auriculares" }}<i class="bi bi-headphones"></i>
+                                                {{ else if eq .Slug "teclados" }}<i class="bi bi-keyboard"></i>
+                                                {{ else if eq .Slug "monitores" }}<i class="bi bi-display"></i>
+                                                {{ else if eq .Slug "ssd" }}<i class="bi bi-device-ssd"></i>
+                                                {{ else }}<i class="bi bi-box"></i>{{ end }}
+                                                </span>
+                                                <span class="category-name">{{ .Name }}</span>
+                                            </a></li>
+                                            {{ end }}
+                                        {{ else }}
+                                            <li><a class="dropdown-item disabled" href="#">No hay categorías disponibles</a></li>
+                                    {{ end }}
+                                </ul>
+                            </li>
+                        </ul>
+                        <ul class="navbar-nav">
+                            {{ if .User }}
+                                    <li class="nav-item me-2">
+                                        <a class="nav-link notification-badge position-relative" href="/notificaciones">
+                                            <i class="bi bi-bell-fill me-1"></i><span class="ms-1">Mis Notificaciones</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item me-2">
+                                        <a class="nav-link cart-badge position-relative" href="/watchlist" id="cart-link">
+                                            <i class="fas fa-shopping-cart me-1"></i>
+                                            <span class="ms-1">Mi Cesta</span>
+                                        </a>
+                            </li>
+                                    <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle user-dropdown" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <span class="user-avatar">
+                                                <i class="bi bi-person-fill"></i>
+                                            </span>
+                                            <span class="ms-1 d-none d-lg-inline">{{ .User.Username }}</span>
+                                        </a>
+                                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-animated shadow-lg" aria-labelledby="userDropdown">
+                                            <li class="dropdown-header">Mi cuenta</li>
+                                            <li><a class="dropdown-item" href="/perfil"><i class="bi bi-person-fill me-2"></i>Mi perfil</a></li>
+                                            <li><a class="dropdown-item" href="/watchlist"><i class="bi bi-cart-fill me-2"></i>Mi cesta</a></li>
+                                            <li><a class="dropdown-item" href="/notificaciones"><i class="bi bi-bell-fill me-2"></i>Notificaciones</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item logout" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión</a></li>
+                                        </ul>
+                            </li>
+                            {{ else }}
+                            <li class="nav-item">
+                                        <a class="nav-link text-secondary me-3" href="/login"><i class="bi bi-box-arrow-in-right me-1"></i>Iniciar sesión</a>
+                            </li>
+                            <li class="nav-item">
+                                        <a class="nav-link text-secondary" href="/registro"><i class="bi bi-person-plus me-1"></i>Registro</a>
+                            </li>
+                            {{ end }}
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="container">
+        {{ block "content" . }}{{ end }}
+            </div>
+        </main>
+
+        <footer class="site-footer mt-5">
+            <div class="container">
+            <div class="row">
+                    <div class="col-md-4 mb-4 mb-md-0">
+                        <h5 class="footer-heading">Comparador de precios<span class="text-primary"></span></h5>
+                        <p class="footer-text">Comparador de precios inteligente que te ayuda a encontrar las mejores ofertas en tecnología.</p>
+                    </div>
+                    <div class="col-md-3 mb-4 mb-md-0">
+                        <h5 class="footer-heading">Categorías</h5>
+                        <ul class="footer-links">
+                            {{ range .Categories }}
+                            <li><a href="/categoria/{{ .Slug }}">{{ .Name }}</a></li>
+                            {{ end }}
+                        </ul>
+                    </div>
+                    <div class="col-md-3 mb-4 mb-md-0">
+                        <h5 class="footer-heading">Enlaces</h5>
+                        <ul class="footer-links">
+                            <li><a href="/">Inicio</a></li>
+                            {{ if .User }}
+                            <li><a href="/watchlist">Mi Cesta</a></li>
+                            <li><a href="/perfil">Mi Perfil</a></li>
+                            {{ else }}
+                            <li><a href="/login">Iniciar Sesión</a></li>
+                            <li><a href="/registro">Registro</a></li>
+                            {{ end }}
+                        </ul>
+                    </div>
+                    <div class="col-md-2">
+                        <h5 class="footer-heading">Sígueme</h5>
+                        <div class="social-icons">
+                            <a href="https://www.linkedin.com/in/sebastianrpp/" target="_blank" class="social-icon"><i class="bi bi-linkedin"></i></a>
+                            <a href="https://github.com/SebastianRoberto" target="_blank" class="social-icon"><i class="bi bi-github"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <hr class="footer-divider">
+                <div class="row footer-bottom">
+                    <div class="col-md-6">
+                        <p class="copyright">&copy; 2025 Proyecto de WebScraping desarrollado por Sebastian Palomino</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <p class="text-muted small">Los precios se actualizan cada 48 horas mediante web scraping.</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script defer src="https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.js"></script>
+    <script defer src="/static/js/main.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
+        });
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+
+        window.showNotification = function(message, type = 'success') {
+            Toast.fire({
+                icon: type,
+                title: message
+            });
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,847 @@
+{{ define "title" }}{{ .Category.Name }}{{ end }}
+
+{{ define "content" }}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ .Category.Name }}</li>
+                </ol>
+            </nav>
+            <h1 class="mb-4">{{ .Category.Name }}</h1>
+        </div>
+    </div>
+
+    <!-- Controles de filtrado y ordenación -->
+    <div class="row mb-4 filter-controls g-4">
+        <div class="col-md-4">
+            <div class="card filter-card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-filter"></i> Filtrar por precio</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-currency-euro"></i></span>
+                                <input type="number" id="price-min" class="form-control" placeholder="Min" min="0" step="1">
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-currency-euro"></i></span>
+                                <input type="number" id="price-max" class="form-control" placeholder="Max" min="0" step="1">
+                            </div>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <button id="apply-filter" class="btn btn-primary w-100">
+                                <i class="bi bi-funnel"></i> Aplicar filtros
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Mostrar filtros activos -->
+                    <div id="active-filters" class="mt-3 d-none">
+                        <hr>
+                        <small class="text-muted">Filtros activos:</small>
+                        <div class="active-filters-container mt-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filtro por tienda -->
+        <div class="col-md-4">
+            <div class="card filter-card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-shop"></i> Filtrar por tienda</h5>
+                </div>
+                <div class="card-body">
+                    <div id="store-filters" class="store-filter-container">
+                        <div class="text-center py-2 store-loader">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Cargando tiendas...</span>
+                            </div>
+                            <span class="ms-2">Cargando tiendas disponibles...</span>
+                        </div>
+                        <!-- Los checkboxes se añadirán aquí dinámicamente -->
+                    </div>
+                    
+                    <div id="active-store-filters" class="mt-3 d-none">
+                        <hr>
+                        <small class="text-muted">Tiendas seleccionadas:</small>
+                        <div class="active-store-filters-container mt-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card filter-card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-sort-down"></i> Ordenar por</h5>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="sort-option" id="sort-asc" autocomplete="off" checked>
+                        <label class="btn btn-outline-primary" for="sort-asc">
+                            <i class="bi bi-sort-numeric-down"></i> Precio más bajo
+                        </label>
+                        
+                        <input type="radio" class="btn-check" name="sort-option" id="sort-desc" autocomplete="off">
+                        <label class="btn btn-outline-primary" for="sort-desc">
+                            <i class="bi bi-sort-numeric-up"></i> Precio más alto
+                        </label>
+                    </div>
+                    
+                    <hr class="my-3">
+                    
+                    <button id="reset-all-filters" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-repeat"></i> Restablecer todos los filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{ if not .Products }}
+    <div class="alert alert-info">
+        <p class="mb-0">No se encontraron productos en esta categoría.</p>
+        <p>Prueba con otra categoría o vuelve más tarde.</p>
+    </div>
+    {{ else }}
+    <!-- Contenedor para el estado de carga inicial -->
+    <div id="loading-state" class="text-center my-5">
+        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Cargando productos...</span>
+        </div>
+        <p class="mt-3">Buscando las mejores ofertas...</p>
+    </div>
+
+    <!-- Contenedor de contenido principal, inicialmente oculto -->
+    <div id="category-content-container" style="display: none;">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="products-container">
+            {{ range .Products }}
+            <div class="col product-item" data-price="{{ if .BestPrice }}{{ .BestPrice }}{{ else }}0{{ end }}" data-store="{{ if .BestStore }}{{ .BestStore }}{{ else }}unknown{{ end }}">
+                <div class="card product-card h-100">
+                    <div class="position-relative">
+                        <img src="{{ .ImageURL }}" class="category-product-image" alt="{{ .Name }}"
+                             loading="lazy"
+                             onerror="this.src='/static/img/no-image.svg'; this.onerror='';"
+                             onload="this.style.opacity='1';"
+                             style="opacity: 0; transition: opacity 0.3s ease;">
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-primary rounded-pill">{{ .Category.Name }}</span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ .Name }}</h5>
+                        <div class="d-flex justify-content-between align-items-center mt-auto mb-2">
+                            {{ if .BestPrice }}
+                            <span class="product-price">{{ printf "%.2f" .BestPrice }}€</span>
+                            {{ if .BestStore }}
+                            <span class="store-badge badge">{{ .BestStore }}</span>
+                            {{ end }}
+                            {{ else }}
+                            <span class="text-muted">Precio no disponible</span>
+                            {{ end }}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0 d-flex justify-content-between">
+                        <a href="/producto/{{ .ID }}" class="btn btn-outline-primary flex-grow-1 me-2">Ver detalle</a>
+                        {{ if $.User }}
+                        <a href="/producto/{{ .ID }}#price-alert" class="btn btn-outline-success">
+                            <i class="bi bi-cart-plus"></i>
+                        </a>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+            {{ end }}
+        </div>
+
+        <!-- Mensaje para cuando no hay resultados tras el filtrado -->
+        <div id="no-results-message" class="alert alert-info text-center my-4 d-none">
+            <i class="bi bi-filter-circle"></i>
+            <p>No se encontraron productos que coincidan con los filtros aplicados.</p>
+            <button id="reset-filters" class="btn btn-outline-primary">Restablecer filtros</button>
+        </div>
+
+        {{ if .TotalPages }}
+            {{ if gt .TotalPages 1 }}
+            <div class="row mt-4">
+                <div class="col-12 d-flex justify-content-center">
+                    <button id="load-more-btn" class="btn btn-outline-primary px-4 py-2"
+                            data-category="{{ .Category.Slug }}"
+                            data-current-page="{{ .CurrentPage }}"
+                            data-total-pages="{{ .TotalPages }}">
+                        <span>Cargar más productos</span>
+                        <div class="spinner-border spinner-border-sm d-none" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            {{ end }}
+        {{ end }}
+    </div>
+    {{ end }}
+</div>
+
+<!-- Agregar estilos de animación para cargar más productos -->
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.product-item {
+    animation: fadeIn 0.5s ease-out;
+}
+
+#load-more-btn {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#load-more-btn:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+#load-more-btn:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    20% {
+        transform: scale(25, 25);
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(40, 40);
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuración inicial
+    let minPrice = null;
+    let maxPrice = null;
+    let selectedStores = [];
+    let sortDirection = 'asc'; // 'asc' = precio menor a mayor, 'desc' = mayor a menor
+    let currentPageGlobal = 1; // Para llevar la cuenta de la página actual globalmente
+    const categorySlugGlobal = document.getElementById('load-more-btn')?.getAttribute('data-category') || '';
+
+
+    // Elementos del DOM
+    const productsContainer = document.getElementById('products-container');
+    const noResultsMessage = document.getElementById('no-results-message');
+    const minInput = document.getElementById('price-min');
+    const maxInput = document.getElementById('price-max');
+    const applyFilterBtn = document.getElementById('apply-filter');
+    const resetFiltersBtn = document.getElementById('reset-filters'); // Botón de reset de filtros de precio
+    const resetAllFiltersBtn = document.getElementById('reset-all-filters');
+    const sortAscBtn = document.getElementById('sort-asc');
+    const sortDescBtn = document.getElementById('sort-desc');
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    const activeFiltersDiv = document.getElementById('active-filters');
+    const activeFiltersContainer = document.querySelector('.active-filters-container');
+    const storeFiltersContainer = document.getElementById('store-filters');
+    const activeStoreFiltersDiv = document.getElementById('active-store-filters');
+    const activeStoreFiltersContainer = document.querySelector('.active-store-filters-container');
+
+    // --- INICIO: Lógica de carga y recarga de productos desde API ---
+    function fetchAndDisplayProducts(page, store, minPriceParam, maxPriceParam, sortParam, append = false) {
+        // Mostrar indicador de carga
+        if (loadMoreBtn) {
+            loadMoreBtn.querySelector('span').style.display = 'none';
+            loadMoreBtn.querySelector('.spinner-border').classList.remove('d-none');
+            loadMoreBtn.disabled = true;
+        }
+        
+        // Construir URL para la API
+        let apiUrl = `/api/categoria/${categorySlugGlobal}?page=${page}`;
+        
+        // Añadir parámetros de filtrado
+        if (store) {
+            apiUrl += `&store=${encodeURIComponent(store)}`;
+        }
+        
+        // Añadir parámetros de precio
+        if (minPriceParam !== null && minPriceParam !== undefined) {
+            apiUrl += `&min_price=${minPriceParam}`;
+        }
+        
+        if (maxPriceParam !== null && maxPriceParam !== undefined) {
+            apiUrl += `&max_price=${maxPriceParam}`;
+        }
+        
+        // Añadir parámetro de ordenamiento
+        apiUrl += `&sort=${sortParam || 'asc'}`;
+        
+        // Logging en consola para depuración
+        console.log(`[DEBUG] Petición a API: ${apiUrl} (append=${append})`);
+        console.log(`[DEBUG] Parámetros: página=${page}, tienda=${store || 'todas'}, precioMin=${minPriceParam || 'no definido'}, precioMax=${maxPriceParam || 'no definido'}, orden=${sortParam || 'asc'}`);
+        
+        // Realizar la petición
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(`[DEBUG] Recibidos ${data.products.length} productos. Total: ${data.total_products}, Páginas: ${data.total_pages}, Página actual: ${data.current_page}`);
+                
+                // Ocultar indicador de carga
+                if (loadMoreBtn) {
+                    loadMoreBtn.querySelector('span').style.display = 'inline';
+                    loadMoreBtn.querySelector('.spinner-border').classList.add('d-none');
+                    loadMoreBtn.disabled = false;
+                }
+
+                if (!append) {
+                    productsContainer.innerHTML = ''; // Limpiar si es una nueva búsqueda/filtro
+                }
+
+                if (data.products && data.products.length > 0) {
+                    data.products.forEach(product => {
+                        const productCard = createProductCard(product);
+                        productsContainer.appendChild(productCard);
+                    });
+                    noResultsMessage.classList.add('d-none');
+                } else if (!append) {
+                    noResultsMessage.classList.remove('d-none');
+                }
+                
+                // Actualizar estado del botón "Cargar más"
+                if (loadMoreBtn) {
+                    loadMoreBtn.setAttribute('data-current-page', data.current_page);
+                    if (data.current_page >= data.total_pages) {
+                        loadMoreBtn.style.display = 'none';
+                    } else {
+                        loadMoreBtn.style.display = 'block';
+                    }
+                }
+                
+                // Mostrar el contenido principal y ocultar el spinner de carga inicial
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('category-content-container').style.display = 'block';
+
+                // Actualizar contadores de tiendas disponibles
+                updateStoreCounts();
+            })
+            .catch(error => {
+                console.error(`[ERROR] Error al cargar productos: ${error.message}`);
+                
+                // Ocultar indicador de carga y mostrar mensaje de error
+                if (loadMoreBtn) {
+                    loadMoreBtn.querySelector('span').style.display = 'inline';
+                    loadMoreBtn.querySelector('.spinner-border').classList.add('d-none');
+                    loadMoreBtn.disabled = false;
+                }
+                
+                // Mostrar mensaje de error
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'alert alert-danger mt-3';
+                errorMsg.textContent = 'Error al cargar más productos. Por favor, inténtelo de nuevo.';
+                
+                // Añadir mensaje de error después del botón
+                if (loadMoreBtn && loadMoreBtn.parentNode) {
+                    loadMoreBtn.parentNode.appendChild(errorMsg);
+                    
+                    // Eliminar mensaje después de 5 segundos
+                    setTimeout(() => {
+                        errorMsg.remove();
+                    }, 5000);
+                }
+            });
+    }
+
+    function showLoadingState(isLoading, isLoadingMore = false) {
+        if (isLoadingMore && loadMoreBtn) {
+            const spinner = loadMoreBtn.querySelector('.spinner-border');
+            const btnText = loadMoreBtn.querySelector('span');
+            if (isLoading) {
+                spinner.classList.remove('d-none');
+                btnText.textContent = 'Cargando...';
+                loadMoreBtn.disabled = true;
+            } else {
+                spinner.classList.add('d-none');
+                btnText.textContent = 'Cargar más productos';
+                loadMoreBtn.disabled = false;
+            }
+        } else if (!isLoadingMore && productsContainer) { // Indicador de carga general para el contenedor
+            if (isLoading) {
+                // Podrías añadir un spinner más grande en el centro de productsContainer
+                productsContainer.innerHTML = '<div class="col-12 text-center py-5"><div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"><span class="visually-hidden">Cargando...</span></div></div>';
+            } else {
+                // Se limpia en fetchAndDisplayProducts o se llena con noResultsMessage
+            }
+        }
+    }
+    
+    function updateLoadMoreButton(currentPage, totalPages) {
+        if (loadMoreBtn) {
+            loadMoreBtn.setAttribute('data-current-page', currentPage);
+            loadMoreBtn.setAttribute('data-total-pages', totalPages);
+            if (currentPage >= totalPages) {
+                loadMoreBtn.classList.add('disabled');
+                loadMoreBtn.querySelector('span').textContent = 'No hay más productos';
+                loadMoreBtn.style.display = 'none'; // Ocultar si no hay más
+            } else {
+                loadMoreBtn.classList.remove('disabled');
+                loadMoreBtn.querySelector('span').textContent = 'Cargar más productos';
+                loadMoreBtn.style.display = 'inline-block'; // Mostrar si hay más
+            }
+        }
+    }
+    // --- FIN: Lógica de carga y recarga de productos desde API ---
+
+
+    // Aplicar filtros de precio (manejado por el cliente por ahora)
+    applyFilterBtn.addEventListener('click', function() {
+        minPrice = minInput.value !== '' ? parseFloat(minInput.value) : null;
+        maxPrice = maxInput.value !== '' ? parseFloat(maxInput.value) : null;
+        updateActivePriceFilters(); // Actualiza la UI de los filtros de precio activos
+        
+        // Recargar desde la API con los nuevos filtros
+        console.log("[DEBUG] Aplicando filtros de precio desde el botón de filtrar");
+        // Obtener tienda seleccionada (si hay una sola)
+        let storeParam = null;
+        if (selectedStores.length === 1) {
+            storeParam = selectedStores[0];
+        }
+        
+        // Cargar desde la API con los filtros actualizados
+        fetchAndDisplayProducts(1, storeParam, minPrice, maxPrice, sortDirection, false);
+    });
+
+    // Restablecer filtros de precio
+    if (resetFiltersBtn) { // El botón resetFiltersBtn es solo para precio en tu HTML
+         resetFiltersBtn.addEventListener('click', function() {
+            minPrice = null;
+            maxPrice = null;
+            minInput.value = '';
+            maxInput.value = '';
+            updateActivePriceFilters();
+            applyClientSideFiltersAndSort();
+        });
+    }
+
+    // Restablecer todos los filtros (precio, tienda y ordenación)
+    resetAllFiltersBtn.addEventListener('click', function() {
+        minPrice = null;
+        maxPrice = null;
+        minInput.value = '';
+        maxInput.value = '';
+        updateActivePriceFilters();
+
+        selectedStores = [];
+        document.querySelectorAll('.store-checkbox').forEach(checkbox => checkbox.checked = false);
+        updateActiveStoreFiltersUI();
+        
+        sortAscBtn.checked = true; // Volver a ordenación por defecto
+        sortDirection = 'asc';
+
+        // Recargar productos desde la API sin filtro de tienda y en página 1
+        fetchAndDisplayProducts(1, null, null, null, 'asc');
+        
+        this.classList.add('btn-spin');
+        setTimeout(() => this.classList.remove('btn-spin'), 500);
+    });
+    
+    // Cambiar ordenación por precio
+    sortAscBtn.addEventListener('change', function() {
+        if (this.checked) {
+            sortDirection = 'asc';
+            console.log("[DEBUG] Cambiando ordenación a: ascendente (precio más bajo primero)");
+            
+            // Obtener tienda seleccionada (si hay una sola)
+            let storeParam = null;
+            if (selectedStores.length === 1) {
+                storeParam = selectedStores[0];
+            }
+            
+            // Recargar productos con el nuevo orden
+            fetchAndDisplayProducts(1, storeParam, minPrice, maxPrice, sortDirection, false);
+        }
+    });
+    
+    sortDescBtn.addEventListener('change', function() {
+        if (this.checked) {
+            sortDirection = 'desc';
+            console.log("[DEBUG] Cambiando ordenación a: descendente (precio más alto primero)");
+            
+            // Obtener tienda seleccionada (si hay una sola)
+            let storeParam = null;
+            if (selectedStores.length === 1) {
+                storeParam = selectedStores[0];
+            }
+            
+            // Recargar productos con el nuevo orden
+            fetchAndDisplayProducts(1, storeParam, minPrice, maxPrice, sortDirection, false);
+        }
+    });
+    
+    // Actualizar visualización de filtros de precio activos
+    function updateActivePriceFilters() {
+        activeFiltersContainer.innerHTML = ''; // Limpiar siempre
+        let hasActivePriceFilter = false;
+
+        if (minPrice !== null) {
+            const minFilter = document.createElement('span');
+            minFilter.className = 'filter-badge';
+            minFilter.innerHTML = `Min: ${minPrice}€ <span class="close" data-filter="min">&times;</span>`;
+            activeFiltersContainer.appendChild(minFilter);
+            minFilter.querySelector('.close').addEventListener('click', function() {
+                minPrice = null;
+                minInput.value = '';
+                updateActivePriceFilters();
+                applyClientSideFiltersAndSort();
+            });
+            hasActivePriceFilter = true;
+        }
+        
+        if (maxPrice !== null) {
+            const maxFilter = document.createElement('span');
+            maxFilter.className = 'filter-badge';
+            maxFilter.innerHTML = `Max: ${maxPrice}€ <span class="close" data-filter="max">&times;</span>`;
+            activeFiltersContainer.appendChild(maxFilter);
+            maxFilter.querySelector('.close').addEventListener('click', function() {
+                maxPrice = null;
+                maxInput.value = '';
+                updateActivePriceFilters();
+                applyClientSideFiltersAndSort();
+            });
+            hasActivePriceFilter = true;
+        }
+
+        if(hasActivePriceFilter) {
+            activeFiltersDiv.classList.remove('d-none');
+        } else {
+            activeFiltersDiv.classList.add('d-none');
+        }
+    }
+    
+    // Cargar las tiendas disponibles dinámicamente
+    function loadAvailableStores() {
+        const storeLoader = storeFiltersContainer.querySelector('.store-loader');
+        if (!storeLoader && storeFiltersContainer.querySelector('.store-filters-list')) {
+             // Si ya están cargados y no hay loader, no hacer nada o actualizar contadores
+            updateStoreCounts();
+            return;
+        }
+        if(storeLoader) storeLoader.style.display = 'block';
+
+
+        const allStoresData = new Map(); // Usar un Map para {nombreTienda: contador}
+        
+        document.querySelectorAll('.product-item').forEach(item => {
+            const store = item.getAttribute('data-store');
+            if (store && store !== 'unknown') {
+                allStoresData.set(store, (allStoresData.get(store) || 0) + 1);
+            }
+        });
+        
+        const storesArray = Array.from(allStoresData.keys()).sort();
+        
+        let filterContent = '';
+        if (storesArray.length === 0) {
+            filterContent = '<p class="text-center text-muted small py-2">No hay tiendas con productos visibles.</p>';
+        } else {
+            filterContent = '<div class="store-filters-list">';
+            storesArray.forEach(store => {
+                const storeId = `store-${store.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+                const storeCount = allStoresData.get(store);
+                const isChecked = selectedStores.includes(store); // Mantener estado del checkbox
+
+                filterContent += `
+                    <div class="form-check store-filter-item mb-2">
+                        <input type="checkbox" class="form-check-input store-checkbox" 
+                               id="${storeId}" data-store="${store}" ${isChecked ? 'checked' : ''}>
+                        <label class="form-check-label" for="${storeId}">
+                            <span class="store-badge badge">${store}</span>
+                            <span class="text-muted ms-1 store-count">(${storeCount})</span>
+                        </label>
+                    </div>
+                `;
+            });
+            filterContent += '</div>';
+        }
+        
+        if(storeLoader) storeLoader.style.display = 'none';
+        storeFiltersContainer.innerHTML = filterContent; // Reemplazar contenido (incluido el loader)
+        
+        document.querySelectorAll('.store-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const storeName = this.getAttribute('data-store');
+                if (this.checked) {
+                    if (!selectedStores.includes(storeName)) selectedStores.push(storeName);
+                } else {
+                    selectedStores = selectedStores.filter(s => s !== storeName);
+                }
+                updateActiveStoreFiltersUI();
+                
+                // Filtrado por tienda ahora se hace en el servidor
+                console.log(`[DEBUG] Filtro de tienda actualizado: ${selectedStores.length > 0 ? selectedStores.join(', ') : 'todas'}`);
+                
+                // Obtener tienda para API (solo si hay una seleccionada)
+                let storeParam = null;
+                if (selectedStores.length === 1) {
+                    storeParam = selectedStores[0];
+                }
+                
+                // Recargar productos con el nuevo filtro de tienda
+                fetchAndDisplayProducts(1, storeParam, minPrice, maxPrice, sortDirection, false);
+            });
+        });
+    }
+
+    function updateStoreCounts() {
+        const allStoresData = new Map();
+         document.querySelectorAll('.product-item:not(.d-none)').forEach(item => { // Solo contar productos visibles
+            const store = item.getAttribute('data-store');
+            if (store && store !== 'unknown') {
+                allStoresData.set(store, (allStoresData.get(store) || 0) + 1);
+            }
+        });
+
+        document.querySelectorAll('.store-checkbox').forEach(checkbox => {
+            const storeName = checkbox.getAttribute('data-store');
+            // Corregir la forma de encontrar countElement
+            const labelElement = checkbox.nextElementSibling; // El label es el siguiente elemento hermano
+            if (labelElement && labelElement.classList.contains('form-check-label')) {
+                const countElement = labelElement.querySelector('.store-count');
+                if (countElement) {
+                    countElement.textContent = `(${(allStoresData.get(storeName) || 0)})`;
+                }
+            }
+        });
+    }
+    
+    // Actualizar UI de filtros activos de tienda
+    function updateActiveStoreFiltersUI() {
+        activeStoreFiltersContainer.innerHTML = '';
+        if (selectedStores.length > 0) {
+            activeStoreFiltersDiv.classList.remove('d-none');
+            selectedStores.forEach(store => {
+                const storeFilterBadge = document.createElement('span');
+                storeFilterBadge.className = 'filter-badge store-filter-badge';
+                storeFilterBadge.innerHTML = `${store} <span class="close" data-store="${store}">&times;</span>`;
+                activeStoreFiltersContainer.appendChild(storeFilterBadge);
+                
+                storeFilterBadge.querySelector('.close').addEventListener('click', function() {
+                    const storeNameToRemove = this.getAttribute('data-store');
+                    selectedStores = selectedStores.filter(s => s !== storeNameToRemove);
+                    document.querySelector(`.store-checkbox[data-store="${storeNameToRemove}"]`).checked = false;
+                    updateActiveStoreFiltersUI();
+                    
+                    // Filtrado por tienda ahora se hace en el servidor
+                    console.log(`[DEBUG] Filtro de tienda eliminado: ${storeNameToRemove}`);
+                    
+                    // Obtener tienda para API (solo si hay una seleccionada)
+                    let storeParam = null;
+                    if (selectedStores.length === 1) {
+                        storeParam = selectedStores[0];
+                    }
+                    
+                    // Recargar productos con el nuevo filtro de tienda
+                    fetchAndDisplayProducts(1, storeParam, minPrice, maxPrice, sortDirection, false);
+                });
+            });
+        } else {
+            activeStoreFiltersDiv.classList.add('d-none');
+        }
+    }
+    
+    // Función para aplicar filtros de cliente (precio) y ordenación
+    function applyClientSideFiltersAndSort() {
+        const productItems = Array.from(productsContainer.querySelectorAll('.product-item'));
+        let visibleCount = 0;
+        
+        productItems.forEach(item => {
+            const price = parseFloat(item.getAttribute('data-price'));
+            const store = item.getAttribute('data-store'); // Lo usamos para el filtro de cliente si es necesario
+            let isVisible = true;
+            
+            // Filtrar por precio (cliente)
+            if (minPrice !== null && price < minPrice && price !== 0) isVisible = false;
+            if (maxPrice !== null && price > maxPrice && price !== 0) isVisible = false;
+            if (price === 0 && (minPrice !== null || maxPrice !== null) ) isVisible = false;
+
+            // Filtrar por tienda (cliente) - ahora siempre se aplica si hay tiendas seleccionadas
+            if (selectedStores.length > 0 && !selectedStores.includes(store)) {
+                isVisible = false;
+            }
+            
+            if (isVisible) {
+                item.classList.remove('d-none');
+                visibleCount++;
+            } else {
+                item.classList.add('d-none');
+            }
+        });
+        
+        if (visibleCount === 0 && (minPrice !== null || maxPrice !== null || selectedStores.length > 0)) {
+            noResultsMessage.classList.remove('d-none');
+            noResultsMessage.querySelector('p').textContent = 'No se encontraron productos que coincidan con los filtros aplicados.';
+             if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        } else if (visibleCount > 0) {
+            noResultsMessage.classList.add('d-none');
+            // El manejo de loadMoreBtn se hace en updateLoadMoreButton basado en API
+        } else if (productsContainer.children.length === 0 && !document.querySelector('.spinner-border')) {
+             // Si no hay productos en absoluto y no está cargando
+            noResultsMessage.classList.remove('d-none');
+            noResultsMessage.querySelector('p').textContent = 'No hay productos en esta categoría.';
+            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        }
+
+
+        // Ordenar los productos visibles
+        const visibleProductItems = Array.from(productsContainer.querySelectorAll('.product-item:not(.d-none)'));
+        
+        visibleProductItems.sort((a, b) => {
+            const priceA = parseFloat(a.getAttribute('data-price')) || 0;
+            const priceB = parseFloat(b.getAttribute('data-price')) || 0;
+            
+            if (sortDirection === 'asc') {
+                if (priceA === 0 && priceB !== 0) return 1; // Productos sin precio al final
+                if (priceB === 0 && priceA !== 0) return -1;
+                return priceA - priceB;
+            } else { // desc
+                if (priceA === 0 && priceB !== 0) return 1;
+                if (priceB === 0 && priceA !== 0) return -1;
+                return priceB - priceA;
+            }
+        });
+        
+        visibleProductItems.forEach(item => productsContainer.appendChild(item));
+        updateStoreCounts(); // Actualizar contadores de tienda después de filtrar/ordenar
+    }
+    
+    // Cargar más productos
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+            const currentPage = parseInt(this.getAttribute('data-current-page'));
+            const totalPages = parseInt(this.getAttribute('data-total-pages'));
+            
+            if (currentPage >= totalPages) return;
+
+            // Enviar los filtros actuales al cargar más productos
+            let storeParam = null;
+            if (selectedStores.length === 1) {
+                storeParam = selectedStores[0];
+            }
+
+            // Enviar todos los parámetros de filtrado y ordenamiento
+            fetchAndDisplayProducts(currentPage + 1, storeParam, minPrice, maxPrice, sortDirection, true);
+        });
+    }
+    
+    // Función para crear una tarjeta de producto que devuelve un NODO del DOM
+    function createProductCard(product) {
+        const bestPrice = product.best_price !== undefined ? parseFloat(product.best_price).toFixed(2) : null;
+        const bestStore = product.best_store || '';
+        const categoryName = product.category && product.category.name ? product.category.name : 'Categoría';
+        const userIsLoggedIn = document.querySelector('meta[name="user-logged-in"]');
+
+        const cardHTML = `
+            <div class="col product-item" data-price="${product.best_price || 0}" data-store="${bestStore || 'unknown'}">
+                <div class="card product-card h-100">
+                    <div class="position-relative">
+                        <img src="${product.image_url || '/static/img/no-image.svg'}" class="category-product-image" alt="${product.name}" 
+                            loading="lazy" 
+                            onerror="this.src='/static/img/no-image.svg'; this.onerror=null;" 
+                            onload="this.style.opacity='1';" 
+                            style="opacity: 0; transition: opacity 0.3s ease;">
+                        <span class="position-absolute top-0 end-0 m-2 badge bg-primary rounded-pill">${categoryName}</span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title"><a href="/producto/${product.id}" class="text-dark text-decoration-none stretched-link">${product.name}</a></h5>
+                        <div class="d-flex justify-content-between align-items-center mt-auto mb-2">
+                            ${bestPrice !== null ? 
+                                `<span class="product-price">${bestPrice}€</span>
+                                ${bestStore ? `<span class="store-badge badge">${bestStore}</span>` : ''}` : 
+                                '<span class="text-muted">Precio no disponible</span>'
+                            }
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0 d-flex justify-content-between">
+                        <a href="/producto/${product.id}" class="btn btn-outline-primary flex-grow-1 me-2">Ver detalle</a>
+                        ${userIsLoggedIn ? `
+                        <a href="/producto/${product.id}#price-alert" class="btn btn-outline-success">
+                            <i class="bi bi-cart-plus"></i>
+                        </a>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Convertir el string HTML a un nodo del DOM
+        const template = document.createElement('template');
+        template.innerHTML = cardHTML.trim();
+        return template.content.firstChild;
+    }
+
+    // Carga inicial de productos y tiendas
+    loadAvailableStores(); // Carga tiendas basadas en los productos renderizados por Go inicialmente
+    
+    // Asegurarse de que el botón de ordenar por precio ascendente esté marcado por defecto
+    if (sortAscBtn) {
+        sortAscBtn.checked = true;
+    }
+    
+    // Realizar la carga inicial de productos ordenados por precio ascendente
+    fetchAndDisplayProducts(1, null, null, null, 'asc', false);
+    
+    // Si hay un query param 'store' en la URL en la carga inicial, deberíamos usarlo.
+    const initialUrlParams = new URLSearchParams(window.location.search);
+    const initialStoreFilter = initialUrlParams.get('store');
+    if (initialStoreFilter) {
+        // Marcar el checkbox y añadir a selectedStores
+        // Asegurarse que los checkboxes ya fueron creados por loadAvailableStores
+        const storeCheckbox = document.querySelector(`.store-checkbox[data-store="${initialStoreFilter}"]`);
+        if (storeCheckbox) {
+            storeCheckbox.checked = true;
+            // El evento 'change' no se dispara programáticamente con .checked = true,
+            // así que actualizamos selectedStores y UI manualmente, luego aplicamos filtros.
+            if (!selectedStores.includes(initialStoreFilter)) {
+                selectedStores.push(initialStoreFilter);
+            }
+        } else {
+            // Si el checkbox no existe (ej. ninguna tienda renderizada inicialmente con ese nombre),
+            // igual lo añadimos para que se muestre el badge y se intente filtrar.
+             if (!selectedStores.includes(initialStoreFilter)) {
+                selectedStores.push(initialStoreFilter);
+            }
+        }
+        updateActiveStoreFiltersUI();
+        // Cargar productos con el filtro de tienda aplicado
+        fetchAndDisplayProducts(1, initialStoreFilter, null, null, 'asc', false);
+    }
+    
+    // Aplicar todos los filtros iniciales (precio, ordenación y tienda preseleccionada si existe)
+    applyClientSideFiltersAndSort(); 
+
+});
+</script>
+{{ end }} 

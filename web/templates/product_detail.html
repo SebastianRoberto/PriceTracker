@@ -1,0 +1,125 @@
+{{ define "title" }}{{ .Product.Name }} - Comparador de Precios{{ end }}
+
+{{ define "content" }}
+<div class="row mb-3">
+    <div class="col-md-5">
+        <div class="product-image-container">
+            <img src="{{ .Product.ImageURL }}" class="img-fluid product-detail-img" 
+                 alt="{{ .Product.Name }}" 
+                 onerror="this.src='/static/img/no-image.svg'; this.onerror='';"
+                 onload="this.style.opacity='1';"
+                 style="opacity: 0; transition: opacity 0.5s ease;">
+        </div>
+    </div>
+    <div class="col-md-7">
+        <h1 class="mb-3">{{ .Product.Name }}</h1>
+        <div class="mb-3">
+            <a href="/categoria/{{ .Product.Category.Slug }}" class="badge bg-primary text-decoration-none">{{ .Product.Category.Name }}</a>
+        </div>
+        <p class="product-description">{{ .Product.Description }}</p>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h3 class="h5 mb-0">Mejor precio: {{ .BestPrice.Price }}€</h3>
+            </div>
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>{{ .BestPrice.Store }}</span>
+                    <a href="{{ .BestPrice.URL }}" target="_blank" class="btn btn-sm btn-success">Ver tienda</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">
+                <h3 class="h5 mb-0">Alertas de precio</h3>
+            </div>
+            <div class="card-body py-2" id="price-alert">
+                {{ if .User }}
+                    <form method="POST" action="/price-alert/set" class="mt-1" id="priceAlertForm">
+                        <input type="hidden" name="product_id" value="{{ .Product.ID }}">
+                        <p class="mb-2">Reciba una alerta cuando el precio baje del valor que indique:</p>
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">€</span>
+                            <input type="number" step="0.01" name="target_price" class="form-control" placeholder="Precio objetivo" 
+                                    value="{{ if .PriceAlert }}{{ .PriceAlert.TargetPrice }}{{ end }}" required>
+                            <button type="submit" class="btn btn-primary">
+                                {{ if .PriceAlert }}Actualizar precio{{ else }}Añadir a mi cesta{{ end }}
+                            </button>
+                        </div>
+                        <div class="alert alert-info small mt-1 mb-1">
+                            <i class="bi bi-info-circle"></i> 
+                            Al añadir este producto a su cesta, recibirá una notificación por email cuando el precio baje del valor indicado.
+                        </div>
+                        
+                        <!-- Feedback visual para confirmación de añadido/actualizado -->
+                        <div id="alertFeedback" class="alert alert-success small mt-2 mb-0 d-none">
+                            <i class="bi bi-check-circle-fill me-1"></i>
+                            <span id="alertFeedbackText">Producto añadido a tu cesta correctamente</span>
+                        </div>
+                        
+                        <!-- Toast para notificación flotante -->
+                        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+                            <div id="productToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+                                <div class="toast-header bg-success text-white">
+                                    <i class="bi bi-cart-check-fill me-2"></i>
+                                    <strong class="me-auto">Cesta</strong>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                                <div class="toast-body">
+                                    <span id="toastMessage">Producto añadido a tu cesta correctamente</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {{ if .PriceAlert }}
+                        <div class="mt-2 text-end">
+                            <a href="/price-alert/delete?id={{ .PriceAlert.ID }}" class="text-danger small">Eliminar de mi cesta</a>
+                        </div>
+                        {{ end }}
+                    </form>
+                {{ else }}
+                    <p>Para añadir productos a su cesta y configurar alertas de precio, <a href="/login">inicie sesión</a> o <a href="/registro">regístrese</a>.</p>
+            {{ end }}
+            </div>
+        </div>
+        
+        <div class="mb-2">
+            <small class="text-muted">Última actualización: {{ .LastUpdated }}</small>
+        </div>
+    </div>
+</div>
+
+{{ if .RelatedProducts }}
+<div class="row mt-4">
+    <div class="col-12">
+        <h3 class="mb-3">Productos relacionados</h3>
+        <div class="row row-cols-1 row-cols-md-4 g-4">
+            {{ range .RelatedProducts }}
+            <div class="col">
+                <div class="card product-card h-100">
+                    <img src="{{ .ImageURL }}" 
+                         class="card-img-top p-3" 
+                         alt="{{ .Name }}"
+                         loading="lazy"
+                         onerror="this.src='/static/img/no-image.svg'; this.onerror='';"
+                         onload="this.style.opacity='1';"
+                         style="opacity: 0; transition: opacity 0.3s ease;">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ .Name }}</h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="product-price">{{ .BestPrice }}€</span>
+                            <span class="store-badge badge bg-secondary">{{ .BestStore }}</span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <a href="/producto/{{ .ID }}" class="btn btn-sm btn-outline-primary w-100">Ver detalle</a>
+                    </div>
+                </div>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+</div>
+{{ end }}
+{{ end }} 
